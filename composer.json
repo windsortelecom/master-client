@@ -1,0 +1,25 @@
+{
+  "name": "windsor/master-client",
+  "description": "HTTP client to interact with the primary Windsor Telecom API",
+  "homepage": "https://github.com/windsortelecom/master-client",
+  "authors": [
+    {
+      "name": "Matt Humphrey",
+      "email": "matth@windsor-telecom.co.uk"
+    },
+    {
+      "name": "Andres Janes",
+      "email": "andres@windsor-telecom.co.uk"
+    }
+  ],
+  "require": {
+    "php": ">=7.1",
+    "guzzlehttp/guzzle": "6.*"
+  },
+  "autoload": {
+    "psr-0": {
+      "Windsor\\Master\\": "src/"
+    }
+  },
+  "minimum-stability": "stable"
+}
