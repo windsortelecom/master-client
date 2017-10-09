@@ -27,7 +27,7 @@ class Exception extends \Exception
                 $statusCode = $message['status'];
             }
 
-            if ($statusCode === 422) {
+            if ($statusCode === 400 || $statusCode === 422) {
                 $errors = $message['errors'] ?? [];
             }
 
