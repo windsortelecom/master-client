@@ -4,6 +4,7 @@ use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Promise as GuzzlePromise;
+use Psr\Http\Message\ResponseInterface;
 
 class Client
 {
@@ -48,7 +49,10 @@ class Client
      * @param string $method
      * @param string $uri
      * @param array $options
-     * @return mixed
+     * @param bool  $async
+     * @param bool  $wait
+     * @return GuzzlePromise\PromiseInterface|mixed
+     * @throws Exception
      */
     public function call($method, $uri, $options = [], $async = false, $wait = false)
     {
@@ -64,9 +68,10 @@ class Client
 
         try {
             $response = $this->guzzle->request($method, $uri, $options);
+
             return $this->parseResponse($response);
         } catch (RequestException $e) {
-            $this->handleException($e);
+            throw $this->handleException($e);
         }
     }
 
@@ -85,9 +90,10 @@ class Client
         if ($wait) {
             try {
                 $response = $promise->wait();
+
                 return $this->parseResponse($response);
             } catch (RequestException $e) {
-                $this->handleException($e);
+                throw $this->handleException($e);
             }
         }
 
@@ -110,7 +116,8 @@ class Client
                 $responses[$key] = $this->parseResponse($response);
             } else if ($result['state'] === 'rejected') {
                 $error = $result['reason'];
-                $this->handleException($error);
+
+                throw $this->handleException($error);
             }
         }
 
@@ -128,9 +135,11 @@ class Client
     }
 
     /**
-     * @param $uri
+     * @param string $uri
      * @param array $options
-     * @return mixed
+     * @param bool  $async
+     * @param bool  $wait
+     * @return GuzzlePromise\PromiseInterface|mixed
      */
     public function put($uri, $options = [], $async = false, $wait = false)
     {
@@ -138,9 +147,11 @@ class Client
     }
 
     /**
-     * @param $uri
+     * @param string $uri
      * @param array $options
-     * @return mixed
+     * @param bool  $async
+     * @param bool  $wait
+     * @return GuzzlePromise\PromiseInterface|mixed
      */
     public function post($uri, $options = [], $async = false, $wait = false)
     {
@@ -148,8 +159,10 @@ class Client
     }
 
     /**
-     * @param $uri
+     * @param string $uri
      * @param array $options
+     * @param bool  $async
+     * @param bool  $wait
      * @return mixed
      */
     public function delete($uri, $options = [], $async = false, $wait = false)
@@ -158,26 +171,34 @@ class Client
     }
 
     /**
-     * @param $response
+     * @param ResponseInterface $response
      * @return mixed
      */
-    protected function parseResponse($response)
+    protected function parseResponse(ResponseInterface $response)
     {
         return $response->getBody()->getContents();
     }
 
     /**
-     * @param $exception
-     * @throws Exception
+     * @param RequestException $exception
+     * @return Exception
      */
-    protected function handleException($exception)
+    protected function handleException(RequestException $exception)
     {
-        $json = json_decode($this->parseResponse($exception->getResponse()), true);
+        $response = $exception->getResponse();
+        $message = $response->getReasonPhrase();
+        $code = $response->getStatusCode();
 
-        if ($exception instanceof ServerException) {
-            $json = $json['error'];
+        if ($this->isJson($response)) {
+            $json = json_decode($this->parseResponse($exception->getResponse()), true);
+            $message = $json;
         }
 
-        throw new Exception($json, 0, $exception);
+        return new Exception($message, $code, $exception);
+    }
+
+    protected function isJson(ResponseInterface $response)
+    {
+        return $response->getHeader('Content-type')[0] == 'application/json';
     }
 }
