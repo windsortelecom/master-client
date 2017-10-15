@@ -190,7 +190,7 @@ class Client
         $code = $response->getStatusCode();
 
         if ($this->isJson($response)) {
-            $json = json_decode($this->parseResponse($exception->getResponse()), true);
+            $json = json_decode($this->parseResponse($response), true);
             $message = $json;
         }
 
