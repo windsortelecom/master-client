@@ -14,7 +14,8 @@
   ],
   "require": {
     "php": ">=7.1",
-    "guzzlehttp/guzzle": "6.*"
+    "guzzlehttp/guzzle": "6.*",
+    "dflydev/dot-access-data": "^1.1"
   },
   "autoload": {
     "psr-0": {

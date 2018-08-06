@@ -7,12 +7,14 @@ class Exception extends \Exception
     protected $type = 'unknown';
     protected $statusCode = 500;
     protected $errors = [];
+    protected $ref;
 
     public function __construct($message = "", $code = 0, Throwable $previous = null)
     {
         $statusCode = null;
         $type = null;
         $errors = null;
+        $ref = null;
 
         if (is_array($message)) {
             if (isset($message['code'])) {
@@ -27,7 +29,11 @@ class Exception extends \Exception
                 $statusCode = $message['status'];
             }
 
-            if ($statusCode === 422) {
+            if (isset($message['ref'])) {
+                $ref = $message['ref'];
+            }
+
+            if ($statusCode === 400 || $statusCode === 422) {
                 $errors = $message['errors'] ?? [];
             }
 
@@ -47,6 +53,10 @@ class Exception extends \Exception
         if (null !== $errors) {
             $this->errors = $errors;
         }
+
+        if (null !== $ref) {
+            $this->ref = $ref;
+        }
     }
 
     public function getType()
@@ -62,5 +72,10 @@ class Exception extends \Exception
     public function getErrors()
     {
         return $this->errors;
+    }
+
+    public function getRef()
+    {
+        return $this->ref;
     }
 }
