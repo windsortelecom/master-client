@@ -101,11 +101,13 @@ class Client
     }
 
     /**
-     * @param $promises
+     * @param      $promises
+     * @param bool $throwOnRejection
+     *
      * @return array
      * @throws Exception
      */
-    public function processAsyncCalls($promises)
+    public function processAsyncCalls($promises, bool $throwOnRejection = true)
     {
         $results = GuzzlePromise\settle($promises)->wait();
 
@@ -117,7 +119,11 @@ class Client
             } else if ($result['state'] === 'rejected') {
                 $error = $result['reason'];
 
-                throw $this->handleException($error);
+                if ($throwOnRejection) {
+                    throw $this->handleException($error);
+                }
+
+                $responses[$key] = $this->parseResponse($error->getResponse());
             }
         }
 
@@ -176,7 +182,10 @@ class Client
      */
     protected function parseResponse(ResponseInterface $response)
     {
-        return $response->getBody()->getContents();
+        $data           = json_decode($response->getBody()->getContents(), true);
+        $data['status'] = $response->getStatusCode();
+
+        return json_encode($data);
     }
 
     /**
