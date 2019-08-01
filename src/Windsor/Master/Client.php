@@ -195,8 +195,21 @@ class Client
     protected function handleException(RequestException $exception)
     {
         $response = $exception->getResponse();
-        $message = $response->getReasonPhrase();
-        $code = $response->getStatusCode();
+
+        if (null === $response) {
+            $context = $exception->getHandlerContext();
+            $message = [
+                'status' => 500,
+                'message' => 'An unknown error has occurred'
+            ];
+
+            $code = $context['errno'];
+
+            // @TODO use LoggerInterface
+        } else {
+            $message = $response->getReasonPhrase();
+            $code = $response->getStatusCode();
+        }
 
         if ($this->isJson($response)) {
             $json = json_decode($this->parseResponse($response), true);
